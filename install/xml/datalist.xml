@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<modification>
+	<id>Data List</id>
+	<version>1.0</version>
+	<vqmver>2.4.1</vqmver>
+	<author>MaRZoCHi</author>
+	<file name="engine/inc/addnews.php">
+		<operation>
+			<ignoreif><![CDATA[// Data List - 1]]></ignoreif>
+			<search position="after"><![CDATA[if( !$config['allow_admin_wysiwyg'] ) $fix_br]]></search>
+			<add><![CDATA[
+// Data List - 1
+include ENGINE_DIR . "/inc/datalist/addnews.datalist.php";
+// Data List - 1
+]]></add>
+		</operation>
+		<operation>
+			<ignoreif><![CDATA[<!-- Data List - 2 -->]]></ignoreif>
+			<search position="before"><![CDATA[{$output}]]></search>
+			<add><![CDATA[
+<!-- Data List - 2 -->
+{$dataListHtml}
+<!-- Data List - 2 -->
+]]></add>
+		</operation>
+		<operation>
+			<ignoreif><![CDATA[// Data List - 3]]></ignoreif>
+			<search position="after"><![CDATA[$db->query( "INSERT INTO " . PREFIX . "_post_extras]]></search>
+			<add><![CDATA[
+// Data List - 3
+$data_list = $_POST['data'];
+if ( count( $data_list ) > 0 ) {
+	$data_text = $db->safesql( json_encode( $data_list ) );
+	$db->query( "INSERT INTO " . PREFIX . "_data_list (news_id, data) VALUES('{$id}', '{$data_text}')" );
+}
+// Data List - 3
+]]></add>
+		</operation>
+	</file>
+	<file name="engine/inc/editnews.php">
+		<operation>
+			<ignoreif><![CDATA[// Data List - 1]]></ignoreif>
+			<search position="after"><![CDATA[if( !$config['allow_admin_wysiwyg'] ) $output]]></search>
+			<add><![CDATA[
+// Data List - 1
+include ENGINE_DIR . "/inc/datalist/editnews.datalist.php";
+// Data List - 1
+]]></add>
+		</operation>
+		<operation>
+			<ignoreif><![CDATA[<!-- Data List - 2 -->]]></ignoreif>
+			<search position="before"><![CDATA[{$output}]]></search>
+			<add><![CDATA[
+<!-- Data List - 2 -->
+{$dataListHtml}
+<!-- Data List - 2 -->
+]]></add>
+		</operation>
+		<operation>
+			<ignoreif><![CDATA[// Data List - 3]]></ignoreif>
+			<search position="before"><![CDATA[if( $add_vote ) {]]></search>
+			<add><![CDATA[
+// Data List - 3
+$data_text = $db->safesql( json_encode( $_POST['data'] ) );
+$control = $db->super_query( "SELECT data FROM " . PREFIX . "_data_list WHERE news_id = '{$item_db[0]}'" );
+if ( isset( $control ) && array_key_exists( "data", $control ) ) {
+	$db->query( "UPDATE " . PREFIX . "_data_list SET data = '{$data_text}' WHERE news_id = '{$item_db[0]}'" );
+} else {
+	$db->query( "INSERT INTO " . PREFIX . "_data_list (news_id, data) VALUES('{$item_db[0]}', '{$data_text}')" );
+}
+// Data List - 3
+]]></add>
+		</operation>
+	</file>
+	<file name="engine/modules/show.full.php">
+		<operation>
+			<ignoreif><![CDATA[// Data List - 1]]></ignoreif>
+			<search position="before"><![CDATA[$tpl->compile( 'content' );]]></search>
+			<add><![CDATA[
+// Data List - 1
+$sel_data = $db->super_query( "SELECT data FROM " . PREFIX . "_data_list WHERE news_id = '" . $newsid . "'");
+if ( ! empty( $sel_data['data'] ) ) {
+	$data_list = json_decode( $sel_data['data'], true );
+	if ( preg_match( "#\\[data-row\\](.+?)\\[/data-row\\]#is", $tpl->copy_template, $match ) ) {
+		$data_content = "";
+		$data_row_tpl = $match[1];
+		foreach( $data_list as $data ) {
+			$data_row_content = $data_row_tpl;
+			foreach( $data as $_k => $_v ) {
+				if ( $_k == "url" ) $_v = urlencode( $_v );
+				$data_row_content = str_replace( '{' . $_k . '}', $_v, $data_row_content );
+			}
+			$data_content .= $data_row_content;
+		}
+		$tpl->copy_template = str_replace( $match[0], $data_content, $tpl->copy_template );
+	}
+} else {
+	$tpl->copy_template = preg_replace( "#\\[data-row\\](.+?)\\[/data-row\\]#is", "", $tpl->copy_template );
+}
+// Data List - 1
+]]></add>
+		</operation>
+	</file>
+</modification>

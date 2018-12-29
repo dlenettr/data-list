@@ -1,0 +1,6 @@
+<?php
+
+$lang['data_list_0'] = "No";
+$lang['data_list_1'] = "İşlem";
+$lang['data_list_2'] = "Sil";
+$lang['data_list_3'] = "Yeni Ekle";

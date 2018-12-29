@@ -1,0 +1,171 @@
+SQL
+=========================================
+CREATE TABLE dle_data_list ( id INT(11) NOT NULL AUTO_INCREMENT , news_id INT(11) NOT NULL , data MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL , PRIMARY KEY (id), UNIQUE (news_id)) ENGINE = InnoDB;
+
+
+File: engine/inc/addnews.php
+=========================================
+Find:
+------------------------
+if( !$config['allow_admin_wysiwyg'] ) $fix_br
+------------------------
+
+Insert below
+------------------------
+// Data List - 1
+include ENGINE_DIR . "/inc/datalist/addnews.datalist.php";
+// Data List - 1
+------------------------
+
+Find:
+------------------------
+{$output}
+------------------------
+
+Insert above
+------------------------
+<!-- Data List - 2 -->
+{$dataListHtml}
+<!-- Data List - 2 -->
+------------------------
+
+Find:
+------------------------
+$db->query( "INSERT INTO " . PREFIX . "_post_extras
+------------------------
+
+Insert below
+------------------------
+// Data List - 3
+$data_list = $_POST['data'];
+if ( count( $data_list ) > 0 ) {
+	$data_text = $db->safesql( json_encode( $data_list ) );
+	$db->query( "INSERT INTO " . PREFIX . "_data_list (news_id, data) VALUES('{$id}', '{$data_text}')" );
+}
+// Data List - 3
+------------------------
+
+
+
+
+File: engine/inc/editnews.php
+=========================================
+Find:
+------------------------
+if( !$config['allow_admin_wysiwyg'] ) $output
+------------------------
+
+Insert below
+------------------------
+// Data List - 1
+include ENGINE_DIR . "/inc/datalist/editnews.datalist.php";
+// Data List - 1
+------------------------
+
+Find:
+------------------------
+{$output}
+------------------------
+
+Insert above
+------------------------
+<!-- Data List - 2 -->
+{$dataListHtml}
+<!-- Data List - 2 -->
+------------------------
+
+Find:
+------------------------
+if( $add_vote ) {
+------------------------
+
+Insert above
+------------------------
+// Data List - 3
+$data_list = $_POST['data'];
+if ( count( $data_list ) > 0 ) {
+	$data_text = $db->safesql( json_encode( $data_list ) );
+	$control = $db->super_query( "SELECT data FROM " . PREFIX . "_data_list WHERE news_id = '{$item_db[0]}'" );
+	if ( isset( $control ) && array_key_exists( "data", $control ) ) {
+		$db->query( "UPDATE " . PREFIX . "_data_list SET data = '{$data_text}' WHERE news_id = '{$item_db[0]}'" );
+	} else {
+		$db->query( "INSERT INTO " . PREFIX . "_data_list (news_id, data) VALUES('{$item_db[0]}', '{$data_text}')" );
+	}
+}
+// Data List - 3
+------------------------
+
+
+
+File: engine/modules/show.full.php
+=========================================
+Find:
+------------------------
+$tpl->compile( 'content' );
+------------------------
+
+Insert above
+------------------------
+// Data List - 1
+$sel_data = $db->super_query( "SELECT data FROM " . PREFIX . "_data_list WHERE news_id = '" . $newsid . "'");
+if ( ! empty( $sel_data['data'] ) ) {
+	$data_list = json_decode( $sel_data['data'], true );
+	if ( preg_match( "#\\[data-row\\](.+?)\\[/data-row\\]#is", $tpl->copy_template, $match ) ) {
+		$data_content = "";
+		$data_row_tpl = $match[1];
+		foreach( $data_list as $data ) {
+			$data_row_content = $data_row_tpl;
+			foreach( $data as $_k => $_v ) {
+				if ( $_k == "url" ) $_v = urlencode( $_v );
+				$data_row_content = str_replace( '{' . $_k . '}', $_v, $data_row_content );
+			}
+			$data_content .= $data_row_content;
+		}
+		$tpl->copy_template = str_replace( $match[0], $data_content, $tpl->copy_template );
+	}
+}
+// Data List - 1
+------------------------
+
+
+
+After installation you can use this tags on "fullstory.tpl" file.
+=========================
+[data-row] ... [/data-row]
+
+You can use fields like this: ( engine/data/datalist.conf.php )
+-------------------------
+{lang}
+{type}
+{quality}
+{host}
+{url}
+
+Example Usage
+-------------------------
+<ul>
+	[data-row]
+	<li>
+		<b>{lang}</b> |
+		<b>{type}</b> |
+		<b>{quality}</b> |
+		<b>{host}</b> |
+		<button data-src="{url}" onclick="watch(this);return false">Watch</button>
+	</li>
+	[/data-row]
+</ul>
+
+Player example
+---------------------------
+
+<!-- Player - start -->
+<iframe src="" id="player" width="720" height="360" scrolling="no" frameborder="0" style="background: #000; border: 4px solid #ccc; border-radius: 3px;"></iframe>
+
+<script>
+function watch(e) {
+	var player = document.getElementById('player');
+	player.src = decodeURIComponent( e.dataset.src );
+}
+</script>
+
+<!-- Player - end -->

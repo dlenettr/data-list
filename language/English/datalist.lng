@@ -1,0 +1,6 @@
+<?php
+
+$lang['data_list_0'] = "No";
+$lang['data_list_1'] = "Action";
+$lang['data_list_2'] = "Delete";
+$lang['data_list_3'] = "Add New";
