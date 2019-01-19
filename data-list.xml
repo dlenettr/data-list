@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<dleplugin>
+	<name>Data List</name>
+	<description>Makaleleriniz için ayrı tabloda tutulan ilave alanlar</description>
+	<icon>engine/skins/images/datalist.png</icon>
+	<version>1.1</version>
+	<dleversion>13.0</dleversion>
+	<versioncompare>greater</versioncompare>
+	<upgradeurl>https://raw.githubusercontent.com/dlenettr/data-list/master/release.json</upgradeurl>
+	<filedelete>1</filedelete>
+	<mysqlinstall><![CDATA[CREATE TABLE {prefix}_data_list ( id INT(11) NOT NULL AUTO_INCREMENT , news_id INT(11) NOT NULL , data MEDIUMTEXT CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL , PRIMARY KEY (id), UNIQUE (news_id)) ENGINE = InnoDB;]]></mysqlinstall>
+	<mysqlupgrade><![CDATA[]]></mysqlupgrade>
+	<mysqlenable><![CDATA[]]></mysqlenable>
+	<mysqldisable><![CDATA[]]></mysqldisable>
+	<mysqldelete><![CDATA[TRUNCATE TABLE {prefix}_data_list;]]></mysqldelete>
+	<file name="engine/inc/addnews.php">
+		<operation action="after">
+			<searchcode><![CDATA[if( !$config['allow_admin_wysiwyg'] ) $fix_br = "<div class=\"checkbox\"><label><input class=\"icheck\" type=\"checkbox\" id=\"allow_br\" name=\"allow_br\" value=\"1\" checked>{$lang['allow_br']}</label></div>"; else $fix_br = "";]]></searchcode>
+			<replacecode><![CDATA[// Data List - 1
+include ENGINE_DIR . "/inc/datalist/addnews.datalist.php";
+// Data List - 1]]></replacecode>
+		</operation>
+		<operation action="before">
+			<searchcode><![CDATA[{$output}]]></searchcode>
+			<replacecode><![CDATA[<!-- Data List - 2 -->
+{$dataListHtml}
+<!-- Data List - 2 -->]]></replacecode>
+		</operation>
+		<operation action="after">
+			<searchcode><![CDATA[$id = $db->insert_id();]]></searchcode>
+			<replacecode><![CDATA[// Data List - 3
+$data_list = $_POST['data'];
+if ( count( $data_list ) > 0 ) {
+	$data_text = $db->safesql( json_encode( $data_list ) );
+	$db->query( "INSERT INTO " . PREFIX . "_data_list (news_id, data) VALUES('{$id}', '{$data_text}')" );
+}
+// Data List - 3]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/inc/editnews.php">
+		<operation action="after">
+			<searchcode><![CDATA[if( !$config['allow_admin_wysiwyg'] ) $output = str_replace("<!--panel-->", $bb_panel, $output);]]></searchcode>
+			<replacecode><![CDATA[// Data List - 1
+include ENGINE_DIR . "/inc/datalist/editnews.datalist.php";
+// Data List - 1]]></replacecode>
+		</operation>
+		<operation action="before">
+			<searchcode><![CDATA[{$output}]]></searchcode>
+			<replacecode><![CDATA[<!-- Data List - 2 -->
+{$dataListHtml}
+<!-- Data List - 2 -->]]></replacecode>
+		</operation>
+		<operation action="before">
+			<searchcode><![CDATA[if( $add_vote ) {]]></searchcode>
+			<replacecode><![CDATA[// Data List - 3
+$data_text = $db->safesql( json_encode( $_POST['data'] ) );
+$control = $db->super_query( "SELECT data FROM " . PREFIX . "_data_list WHERE news_id = '{$item_db[0]}'" );
+if ( isset( $control ) && array_key_exists( "data", $control ) ) {
+	$db->query( "UPDATE " . PREFIX . "_data_list SET data = '{$data_text}' WHERE news_id = '{$item_db[0]}'" );
+} else {
+	$db->query( "INSERT INTO " . PREFIX . "_data_list (news_id, data) VALUES('{$item_db[0]}', '{$data_text}')" );
+}
+// Data List - 3]]></replacecode>
+		</operation>
+	</file>
+	<file name="engine/modules/show.full.php">
+		<operation action="before">
+			<searchcode><![CDATA[$tpl->compile( 'content' );]]></searchcode>
+			<replacecode><![CDATA[// Data List - 1
+$sel_data = $db->super_query( "SELECT data FROM " . PREFIX . "_data_list WHERE news_id = '" . $newsid . "'");
+if ( ! empty( $sel_data['data'] ) ) {
+	$data_list = json_decode( $sel_data['data'], true );
+	if ( preg_match( "#\\[data-row\\](.+?)\\[/data-row\\]#is", $tpl->copy_template, $match ) ) {
+		$data_content = "";
+		$data_row_tpl = $match[1];
+		foreach( $data_list as $data ) {
+			$data_row_content = $data_row_tpl;
+			foreach( $data as $_k => $_v ) {
+				if ( $_k == "url" ) $_v = urlencode( $_v );
+				$data_row_content = str_replace( '{' . $_k . '}', $_v, $data_row_content );
+			}
+			$data_content .= $data_row_content;
+		}
+		$tpl->copy_template = str_replace( $match[0], $data_content, $tpl->copy_template );
+	}
+} else {
+	$tpl->copy_template = preg_replace( "#\\[data-row\\](.+?)\\[/data-row\\]#is", "", $tpl->copy_template );
+}
+// Data List - 1]]></replacecode>
+		</operation>
+	</file>
+</dleplugin>
