@@ -1,5 +1,5 @@
 # Data List
-<img src="https://img.shields.io/badge/dle-12.1-007dad.svg"> <img src="https://img.shields.io/badge/lang-tr-ce600f.svg"> <img src="https://img.shields.io/badge/license-MIT-60ce0f.svg">
+<img src="https://img.shields.io/badge/dle-13.0+-007dad.svg"> <img src="https://img.shields.io/badge/lang-tr-ce600f.svg"> <img src="https://img.shields.io/badge/license-MIT-60ce0f.svg">
 
 Makaleniz için ekstra alanlar oluşturup bu bilgileri farklı tabloda saklayabilirsiniz.
 Modülün yapılış amacı ile ilgili bir örnek verecek olursak; Bir film veya dizi siteniz var. Film için birden fazla alternatif indirme veya izleme için URL giriyorsunuz. Bunun yanında o URL ye ait ekstra bilgiler... dil, site vb. var. Makale için bu alanlardan istediğiniz kadar ekleyip. Burada DLE'nin kendi sunduğu ilave alanları kullanınca satır satır girseniz bile farklı bir formatta gösteremeyeceğiniz için işinize yaramayacaktır. Veya bunu yapmak için ekstra olarak sistemi düzenlemeniz gerekecektir.
